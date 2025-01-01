@@ -1,33 +1,32 @@
 package org.Database;
 
-import java.util.List;
+import java.util.Map;
 
-public class Row{
+public class Row {
 
-    private List<String> values;
+    private Map<Column, Object> values;
 
-    public Row(List<String> values){
+    public Row(Map<Column, Object> values) {
         this.values = values;
     }
 
-    public List<String> getValues(){
+    public Map<Column, Object> getValues() {
         return values;
     }
 
-    public void setValues(List<String> values){
+    public void setValues(Map<Column, Object> values) {
         this.values = values;
     }
 
-    public String getValue(int index){
-        return values.get(index);
+    public Object getValue(Column column) {
+        return values.get(column);
     }
 
-    public void addValue(String value){
-        values.add(value);
+    public void addValue(Column column, Object value) {
+        values.put(column, value);
     }
 
-    public void modifyValue(int index, String value){
-        values.set(index, value);
+    public void modifyValue(Column column, Object value) {
+        values.put(column, value);
     }
-
 }

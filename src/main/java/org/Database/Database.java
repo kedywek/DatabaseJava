@@ -9,6 +9,7 @@ public class Database {
 
     private String name;
     private Map<String, Table> tables;
+    private File file;
 
 
     public Database(String name){
@@ -31,6 +32,9 @@ public class Database {
     }
 
     public Table getTable(String name){
+        if (!tables.containsKey(name)) {
+            throw new IllegalArgumentException("Table does not exist");
+        }
         return tables.get(name);
     }
 
@@ -49,6 +53,14 @@ public class Database {
     }
 
     public void saveDatabase(File file){
+        //TODO
+    }
+
+    public void loadDatabase(File file){
+        //TODO
+    }
+
+    public void dropDatabase(){
         //TODO
     }
 

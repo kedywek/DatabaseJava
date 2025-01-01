@@ -6,7 +6,7 @@ public class Column{
     private String name;
     private String type;
 
-    private static final Set<String> VALID_TYPES = Set.of("String", "Integer", "Float", "Double", "Boolean");
+    private static final Set<String> VALID_TYPES = Set.of("STRING", "INT", "FLOAT", "DOUBLE", "BOOLEAN", "DATE");
 
 
     public Column(String name, String type) {
@@ -14,7 +14,7 @@ public class Column{
             throw new IllegalArgumentException("Column name cannot be null or empty");
         }
         if (isValidType(type)) {
-            throw new IllegalArgumentException("Column type cannot be null or empty");
+            throw new IllegalArgumentException("type must be one of following: STRING, INT, FLOAT, DOUBLE, BOOLEAN, DATE");
         }
         this.name = name;
         this.type = type;

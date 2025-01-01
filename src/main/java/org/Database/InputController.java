@@ -1,6 +1,8 @@
 package org.Database;
 
+import java.util.List;
 import java.util.Scanner;
+import java.util.Vector;
 
 public class InputController {
 
@@ -19,94 +21,174 @@ public class InputController {
         FINISHED
     }
 
+    static Database database;
+
     static State state = State.RUNNING;
 
-    static InputController.State getState(){
+    static InputController.State getState() {
         return state;
     }
 
-    static void setState(InputController.State state){
+    static void setState(InputController.State state) {
         InputController.state = state;
     }
 
-    static Database database;
-
     public static void main(String[] args) {
-       Scanner scaner = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
 
-       while(state == State.RUNNING){
-           String command = scaner.nextLine();
-           processCommand(command, database);
-       }
+        while (state == State.RUNNING) {
+            String command = scanner.nextLine();
+            processCommand(command);
+        }
     }
 
-    static void processCommand(String command, Database database){
-        String[] commandParts = command.split(" ");
-        Command commandType = Command.valueOf(commandParts[0].toUpperCase());
-        switch (commandType){
+    static void processCommand(String command) {
+        String[] commands = command.split(";");
+        for (String commandPart : commands) {
+            String[] commandParts = commandPart.split(" ");
+            Command commandType = Command.valueOf(commandParts[0].toUpperCase());
+            executeCommand(commandType, commandParts);
+        }
+    }
+
+    static void executeCommand(Command commandType, String[] commandParts) {
+        switch (commandType) {
             case CREATE:
-                createCommand(commandParts, database);
+                create(commandParts);
                 break;
             case DROP:
-                dropCommand(commandParts, database);
+                drop(commandParts);
                 break;
             case ALTER:
-                alterCommand(commandParts, database);
+                alter(commandParts);
                 break;
             case SELECT:
-                selectCommand(commandParts, database);
+                select(commandParts);
                 break;
             case INSERT:
-                insertCommand(commandParts, database);
+                insert(commandParts);
                 break;
             case DELETE:
-                deleteCommand(commandParts, database);
+                delete(commandParts);
                 break;
             case UPDATE:
-                updateCommand(commandParts, database);
+                update(commandParts);
                 break;
+            default:
+                throw new IllegalArgumentException("Invalid command");
         }
     }
 
-    static void createCommand(String[] commandParts, Database database){
-        if(commandParts.length < 3){
-            System.out.println("Invalid command");
-            return;
-        }
-        String type = commandParts[1];
-        switch (type){
+    static void create(String[] commandParts) {
+        switch (commandParts[1].toUpperCase()) {
             case "DATABASE":
-                database = new Database(commandParts[2]);
-                if (commandParts.length > 3){
+                if (commandParts.length != 3) {
                     throw new IllegalArgumentException("Invalid command");
                 }
+                database = new Database(commandParts[2]);
                 break;
             case "TABLE":
-                if (database == null){
-                    throw new IllegalArgumentException("No database selected");
+                List<String> columnNames = new Vector<>();
+                List<String> columnTypes = new Vector<>();
+                if (commandParts[3].equals("(*")) {
+                    if (!commandParts[commandParts.length - 1].equals(")")) {
+                        throw new IllegalArgumentException("Invalid command");
+                    }
+                    int i = 3;
+                    while (!commandParts[i].equals(")")) {
+                        while (!commandParts[i].equals(",")) {
+                            i++;
+                        }
+                        columnNames.add(commandParts[i - 2]);
+                        columnTypes.add(commandParts[i - 1]);
+                        i++;
+                    }
                 }
-                Table table = new Table(commandParts[2]);
+                Table table = new Table(commandParts[2], columnNames.toArray(new String[0]), columnTypes.toArray(new String[0]));
                 database.addTable(table);
                 break;
+
+            default:
+                throw new IllegalArgumentException("Invalid command");
         }
     }
-    static void dropCommand(String[] commandParts, Database database){
-        if(commandParts.length < 3){
-            System.out.println("Invalid command");
-            return;
+
+    static void drop(String[] commandParts) {
+        if (commandParts.length != 3) {
+            throw new IllegalArgumentException("Invalid command");
         }
-        String type = commandParts[1];
-        switch (type){
+        switch (commandParts[1]) {
             case "DATABASE":
                 database = null;
                 break;
             case "TABLE":
-                if (database == null){
-                    throw new IllegalArgumentException("No database selected");
-                }
                 database.removeTable(commandParts[2]);
                 break;
+            default:
+                throw new IllegalArgumentException("Invalid command");
         }
     }
 
+    static void alter(String[] commandParts) {
+        if (commandParts.length != 6) {
+            throw new IllegalArgumentException("Invalid command");
+        }
+        switch (commandParts[1]) {
+            case "TABLE":
+                Table table = database.getTable(commandParts[2]);
+                switch (commandParts[3]) {
+                    case "ADD":
+                        Column column = new Column(commandParts[4], commandParts[5]);
+                        table.addColumn(column);
+                        break;
+                    case "DROP":
+                        table.removeColumn(commandParts[4]);
+                        break;
+                    case "MODIFY":
+                        Column newColumn = new Column(commandParts[4], commandParts[5]);
+                        table.modifyColumn(commandParts[4], newColumn);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Invalid command");
+                }
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid command");
+        }
+    }
+
+    static String select(String[] commandParts) {
+        if (commandParts.length < 4) {
+            throw new IllegalArgumentException("Invalid command");
+        }
+        List<String> columns = new Vector<>();
+        StringBuilder output = new StringBuilder();
+        Table table;
+        if (commandParts[1].equals("*")) {
+            if (commandParts[2].equalsIgnoreCase("FROM")) {
+                table = database.getTable(commandParts[3]);
+                columns = table.getColumnNames();
+            }
+        }
+        else{
+            int i = 1;
+            while (!commandParts[i].equals("FROM")) {
+                columns.add(commandParts[i]);
+                i++;
+            }
+            table = database.getTable(commandParts[i + 1]);
+        }
+        if(columns.isEmpty()){
+            throw new IllegalArgumentException("Invalid command");
+        }
+
+
+
+
+
+        return output.toString();
+    }
+
+    
 }
+
