@@ -52,6 +52,49 @@ public class Database {
         tables.put(newName, table);
     }
 
+    public Table join(String[] tableNames, String[] condition){
+        Table result = new Table(tableNames[0] + "_" + tableNames[1]);
+        String[] leftPartOfCondition = condition[0].split("\\.");
+        String[] rightPartOfCondition = condition[1].split("\\.");
+        Table[] tables = new Table[2];
+        tables[0] = getTable(tableNames[0]);
+        tables[1] = getTable(tableNames[1]);
+        Column[] columnsToMerge = new Column[2];
+        if (leftPartOfCondition[0].equals(tableNames[0])) {
+            columnsToMerge[0] = tables[0].getColumn(leftPartOfCondition[1]);
+        }
+        else if(rightPartOfCondition[0].equals(tableNames[0])){
+            columnsToMerge[0] = tables[0].getColumn(rightPartOfCondition[1]);
+        }
+        else{
+            throw new IllegalArgumentException("Invalid condition");
+        }
+        if (leftPartOfCondition[0].equals(tableNames[1])) {
+            columnsToMerge[1] = tables[0].getColumn(leftPartOfCondition[1]);
+        }
+        else if(rightPartOfCondition[0].equals(tableNames[1])){
+            columnsToMerge[1] = tables[0].getColumn(rightPartOfCondition[1]);
+        }
+        else{
+            throw new IllegalArgumentException("Invalid condition");
+        }
+        for (Row row1 : tables[0].getRows()) {
+            for (Row row2 : tables[1].getRows()) {
+                if (row1.getValue(columnsToMerge[0]).equals(row2.getValue(columnsToMerge[1]))) {
+                    Row newRow = new Row();
+                    for (Column column : tables[0].getColumns().values()) {
+                        newRow.addValue(column, row1.getValue(column));
+                    }
+                    for (Column column : tables[1].getColumns().values()) {
+                        newRow.addValue(column, row2.getValue(column));
+                    }
+                    result.addRow(newRow);
+                }
+            }
+        }
+        return result;
+    }
+
     public void saveDatabase(File file){
         //TODO
     }

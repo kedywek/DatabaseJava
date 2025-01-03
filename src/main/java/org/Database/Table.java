@@ -76,10 +76,7 @@ public class Table {
         columns.remove(oldName);
         columns.put(newName, column);
     }
-    public Table join(Table table, String condition) {
-        //TODO
-        return null;
-    }
+
 
     public String select(String[] columnNames) {
 

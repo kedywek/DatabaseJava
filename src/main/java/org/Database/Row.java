@@ -10,6 +10,9 @@ public class Row {
         this.values = values;
     }
 
+    public Row() {
+    }
+
     public Map<Column, Object> getValues() {
         return values;
     }
