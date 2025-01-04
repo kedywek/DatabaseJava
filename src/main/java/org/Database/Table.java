@@ -114,7 +114,7 @@ public class Table {
         }
         result.append("\n");
         for (Row row : rows) {
-            boolean conditionMet = isConditionMet(row, condition);
+            boolean conditionMet = multipleConditionsMet(row, condition);
             if (conditionMet) {
                 for (String columnName : columnNames) {
                     result.append(row.getValue(columns.get(columnName))).append(" ");
@@ -127,7 +127,7 @@ public class Table {
     public void delete(String[] condition) {
         for (int i = 0; i < rows.size(); i++) {
             Row row = rows.get(i);
-            boolean conditionMet = isConditionMet(row, condition);
+            boolean conditionMet = multipleConditionsMet(row, condition);
             if (conditionMet) {
                 rows.remove(i);
                 i--;
@@ -136,7 +136,7 @@ public class Table {
     }
     public void update(String[] columnNames,String[] values, String[] condition) {
         for (Row row : rows) {
-            boolean conditionMet = isConditionMet(row, condition);
+            boolean conditionMet = multipleConditionsMet(row, condition);
             if (conditionMet) {
                 for (int i = 0; i < columnNames.length; i++) {
                     if (!columns.containsKey(columnNames[i])) {
@@ -146,6 +146,26 @@ public class Table {
                 }
             }
         }
+    }
+    private boolean multipleConditionsMet(Row row, String[] conditions) {
+        boolean result = true;
+        for (int i = 3; i < conditions.length; i += 4) {
+            try{
+                if (conditions[i].equals("AND")) {
+                    result = result && isConditionMet(row, new String[]{conditions[i - 3], conditions[i - 2], conditions[i - 1]});
+                }
+                else if (conditions[i].equals("OR")) {
+                    result = result || isConditionMet(row, new String[]{conditions[i - 3], conditions[i - 2], conditions[i - 1]});
+                }
+                else {
+                    throw new IllegalArgumentException("Invalid condition");
+                }
+            }
+            catch (ArrayIndexOutOfBoundsException e){
+                return result;
+            }
+        }
+        return result;
     }
     private boolean isConditionMet(Row row, String[] condition) {
         Object value1 = row.getValue(columns.get(condition[0]));
