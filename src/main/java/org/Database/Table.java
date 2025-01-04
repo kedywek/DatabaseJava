@@ -2,7 +2,6 @@ package org.Database;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.LinkedHashMap;
 
@@ -57,8 +56,8 @@ public class Table {
         return List.copyOf(columns.keySet());
     }
 
-    public LinkedHashMap<String, Column> getColumns() {
-        return columns;
+    public List<Column> getColumns() {
+        return List.copyOf(columns.values());
     }
 
     public void modifyColumn(String name, Column column) {

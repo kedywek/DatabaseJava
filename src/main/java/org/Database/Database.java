@@ -82,10 +82,10 @@ public class Database {
             for (Row row2 : tables[1].getRows()) {
                 if (row1.getValue(columnsToMerge[0]).equals(row2.getValue(columnsToMerge[1]))) {
                     Row newRow = new Row();
-                    for (Column column : tables[0].getColumns().values()) {
+                    for (Column column : tables[0].getColumns()) {
                         newRow.addValue(column, row1.getValue(column));
                     }
-                    for (Column column : tables[1].getColumns().values()) {
+                    for (Column column : tables[1].getColumns()) {
                         newRow.addValue(column, row2.getValue(column));
                     }
                     result.addRow(newRow);
@@ -93,10 +93,6 @@ public class Database {
             }
         }
         return result;
-    }
-
-    public void saveDatabase(File file){
-        //TODO
     }
 
     public void loadDatabase(File file){

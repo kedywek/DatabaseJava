@@ -1,9 +1,6 @@
 package org.Database;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Vector;
+import java.util.*;
 
 public class InputController {
 
@@ -26,11 +23,11 @@ public class InputController {
 
     static State state = State.RUNNING;
 
-    static InputController.State getState() {
+    static State getState() {
         return state;
     }
 
-    static void setState(InputController.State state) {
+    static void setState(State state) {
         InputController.state = state;
     }
 
@@ -108,7 +105,7 @@ public class InputController {
                         }
                     }
                 } catch (ArrayIndexOutOfBoundsException e) {
-
+                    throw new IllegalArgumentException("Invalid command");
                 }
                 Table table = new Table(commandParts[2], columnNames.toArray(new String[0]), columnTypes.toArray(new String[0]));
                 database.addTable(table);
@@ -139,27 +136,25 @@ public class InputController {
         if (commandParts.length != 6) {
             throw new IllegalArgumentException("Invalid command");
         }
-        switch (commandParts[1].toUpperCase()) {
-            case "TABLE":
-                Table table = database.getTable(commandParts[2]);
-                switch (commandParts[3].toUpperCase()) {
-                    case "ADD":
-                        Column column = new Column(commandParts[4], commandParts[5]);
-                        table.addColumn(column);
-                        break;
-                    case "DROP":
-                        table.removeColumn(commandParts[4]);
-                        break;
-                    case "MODIFY":
-                        Column newColumn = new Column(commandParts[4], commandParts[5]);
-                        table.modifyColumn(commandParts[4], newColumn);
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Invalid command");
-                }
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid command");
+        if (commandParts[1].equalsIgnoreCase("TABLE")) {
+            Table table = database.getTable(commandParts[2]);
+            switch (commandParts[3].toUpperCase()) {
+                case "ADD":
+                    Column column = new Column(commandParts[4], commandParts[5]);
+                    table.addColumn(column);
+                    break;
+                case "DROP":
+                    table.removeColumn(commandParts[4]);
+                    break;
+                case "MODIFY":
+                    Column newColumn = new Column(commandParts[4], commandParts[5]);
+                    table.modifyColumn(commandParts[4], newColumn);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid command");
+            }
+        } else {
+            throw new IllegalArgumentException("Invalid command");
         }
     }
 
@@ -168,7 +163,7 @@ public class InputController {
             throw new IllegalArgumentException("Invalid command");
         }
         List<String> columns = new Vector<>();
-        StringBuilder output = new StringBuilder();
+        String output = "";
         Table table;
         if (commandParts[1].equals("*")) {
             if (commandParts[2].equalsIgnoreCase("FROM")) {
@@ -201,16 +196,17 @@ public class InputController {
 
         for (int i = 4; i < commandParts.length; i++) {
             if (commandParts[i].equalsIgnoreCase("WHERE")) {
-               Vector<String> condition = new Vector<>();
-                for (int j = i + 1; j < commandParts.length; j++) {
-                    condition.add(commandParts[j]);
+                Vector<String> condition = new Vector<>(Arrays.asList(commandParts).subList(i + 1, commandParts.length));
+                try{
+                    return table.where(columns.toArray(new String[0]), condition.toArray(new String[0]));
                 }
-                return table.where(columns.toArray(new String[0]), condition.toArray(new String[0]));
+                catch (IllegalArgumentException e){
+                    throw new IllegalArgumentException("Invalid command");
+                }
             }
             if (commandParts[i].equalsIgnoreCase("JOIN")) {
-                Vector<String> tableNames = new Vector<>();
                 Vector<String> condition = new Vector<>();
-                Table toJoin = null;
+                Table toJoin;
                 i++;
                 try{
                     toJoin = database.getTable(commandParts[i]);
@@ -231,7 +227,7 @@ public class InputController {
                 table = database.join(new String[]{table.getName(), toJoin.getName()}, condition.toArray(new String[0]));
             }
         }
-        return output.toString();
+        return output;
     }
     static void insert(String[] commandParts) {
         if (commandParts.length < 5) {
@@ -241,7 +237,8 @@ public class InputController {
             throw new IllegalArgumentException("Invalid command");
         }
         Table table = database.getTable(commandParts[2]);
-        LinkedHashMap<String, Column> columns;
+
+        List<Column> columns;
         int i = 3;
         switch (commandParts[i].toUpperCase()){
             case "VALUES":
@@ -249,13 +246,13 @@ public class InputController {
                 i++;
                 break;
             case "(":
-                columns = new LinkedHashMap<>();
+                columns = new Vector<>();
                 for(i = 4; i < table.getColumnNames().size() + 4; i++){
                     if(commandParts[i].equals(")")){
                         break;
                     }
                    try{
-                       columns.put(commandParts[i], table.getColumn(commandParts[i]));
+                          columns.add(table.getColumn(commandParts[i]));
                      }catch (IllegalArgumentException e){
                        throw new IllegalArgumentException("Invalid command");
                    }
@@ -269,8 +266,9 @@ public class InputController {
             default:
                 throw new IllegalArgumentException("Invalid command");
         }
-        for (i = i; i< commandParts.length; i++){
+        for (; i< commandParts.length; i++){
             if (commandParts[i].equalsIgnoreCase("(")){
+                int j = 0;
                 try{
                     Row row = new Row();
                     while (!commandParts[i].equalsIgnoreCase(")")){
@@ -278,7 +276,8 @@ public class InputController {
                         if (commandParts[i].equals(",")){
                             continue;
                         }
-                        row.addValue(table.getColumn(table.getColumnNames().get(i)), commandParts[i]);
+                        row.addValue(columns.get(j), commandParts[i]);
+                        j++;
                     }
                     try{
                         table.addRow(row);
@@ -304,11 +303,13 @@ public class InputController {
         if (!commandParts[3].equalsIgnoreCase("WHERE")) {
             throw new IllegalArgumentException("Invalid command");
         }
-        Vector<String> condition = new Vector<>();
-        for (int i = 4; i < commandParts.length; i++) {
-            condition.add(commandParts[i]);
+        Vector<String> condition = new Vector<>(Arrays.asList(commandParts).subList(4, commandParts.length));
+        try {
+            table.delete(condition.toArray(new String[0]));
         }
-        table.delete(condition.toArray(new String[0]));
+        catch (IllegalArgumentException e){
+            throw new IllegalArgumentException("Invalid command");
+        }
     }
 
     static void update(String[] commandParts) {
