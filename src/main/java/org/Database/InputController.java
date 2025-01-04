@@ -270,9 +270,86 @@ public class InputController {
                 throw new IllegalArgumentException("Invalid command");
         }
         for (i = i; i< commandParts.length; i++){
-
+            if (commandParts[i].equalsIgnoreCase("(")){
+                try{
+                    Row row = new Row();
+                    while (!commandParts[i].equalsIgnoreCase(")")){
+                        i++;
+                        if (commandParts[i].equals(",")){
+                            continue;
+                        }
+                        row.addValue(table.getColumn(table.getColumnNames().get(i)), commandParts[i]);
+                    }
+                    try{
+                        table.addRow(row);
+                    }
+                    catch (IllegalArgumentException e){
+                        throw new IllegalArgumentException("Invalid command");
+                    }
+                }
+                catch (ArrayIndexOutOfBoundsException e){
+                    throw new IllegalArgumentException("Invalid command");
+                }
+            }
         }
+    }
+    static void delete(String[] commandParts) {
+        if (commandParts.length < 4) {
+            throw new IllegalArgumentException("Invalid command");
+        }
+        if (!commandParts[1].equalsIgnoreCase("FROM")) {
+            throw new IllegalArgumentException("Invalid command");
+        }
+        Table table = database.getTable(commandParts[2]);
+        if (!commandParts[3].equalsIgnoreCase("WHERE")) {
+            throw new IllegalArgumentException("Invalid command");
+        }
+        Vector<String> condition = new Vector<>();
+        for (int i = 4; i < commandParts.length; i++) {
+            condition.add(commandParts[i]);
+        }
+        table.delete(condition.toArray(new String[0]));
+    }
 
+    static void update(String[] commandParts) {
+        if (commandParts.length < 6) {
+            throw new IllegalArgumentException("Invalid command");
+        }
+        Table table;
+        try{
+            table = database.getTable(commandParts[1]);
+        }
+        catch (ArrayIndexOutOfBoundsException e){
+            throw new IllegalArgumentException("Invalid command");
+        }
+        if (!commandParts[2].equalsIgnoreCase("SET")) {
+            throw new IllegalArgumentException("Invalid command");
+        }
+        Vector<String> columns = new Vector<>();
+        Vector<String> values = new Vector<>();
+        int i = 3;
+        while (!commandParts[i].equalsIgnoreCase("WHERE")) {
+            while(!commandParts[i].equals(",")){
+                i++;
+            }
+            try{
+                columns.add(commandParts[i - 3]);
+                values.add(commandParts[i-1]);
+            }
+            catch (IllegalArgumentException e){
+                throw new IllegalArgumentException("Invalid command");
+            }
+        }
+        Vector<String> condition = new Vector<>();
+        for (i = i + 1; i < commandParts.length; i++) {
+            condition.add(commandParts[i]);
+        }
+        try{
+            table.update(columns.toArray(new String[0]), values.toArray(new String[0]), condition.toArray(new String[0]));
+        }
+        catch (IllegalArgumentException e){
+            throw new IllegalArgumentException("Invalid command");
+        }
     }
 }
 

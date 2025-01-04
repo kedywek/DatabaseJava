@@ -32,4 +32,7 @@ public class Row {
     public void modifyValue(Column column, Object value) {
         values.put(column, value);
     }
+    public String[] getColumnNames() {
+        return values.keySet().stream().map(Column::getName).toArray(String[]::new);
+    }
 }

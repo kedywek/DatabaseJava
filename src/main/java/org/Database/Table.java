@@ -91,7 +91,13 @@ public class Table {
 
         for (Row row : rows) {
             for (String columnName : columnNames) {
-                result.append(row.getValue(columns.get(columnName))).append(" ");
+                String value = row.getValue(columns.get(columnName)).toString();
+                if (value != null) {
+                    result.append(value).append(" ");
+                }
+                else {
+                    result.append(" ").append(" ");
+                }
             }
             result.append("\n");
         }
@@ -108,33 +114,7 @@ public class Table {
         }
         result.append("\n");
         for (Row row : rows) {
-            Object value1 = row.getValue(columns.get(condition[0]));
-            Object value2 = parseValue(condition[2], columns.get(condition[0]).getType());
-
-            boolean conditionMet = false;
-            switch (condition[1]) {
-                case "=":
-                    conditionMet = value1.equals(value2);
-                    break;
-                case "!=":
-                    conditionMet = !value1.equals(value2);
-                    break;
-                case ">":
-                    conditionMet = compareValues(value1, value2) > 0;
-                    break;
-                case "<":
-                    conditionMet = compareValues(value1, value2) < 0;
-                    break;
-                case ">=":
-                    conditionMet = compareValues(value1, value2) >= 0;
-                    break;
-                case "<=":
-                    conditionMet = compareValues(value1, value2) <= 0;
-                    break;
-                default:
-                    throw new IllegalArgumentException("Invalid condition");
-            }
-
+            boolean conditionMet = isConditionMet(row, condition);
             if (conditionMet) {
                 for (String columnName : columnNames) {
                     result.append(row.getValue(columns.get(columnName))).append(" ");
@@ -144,7 +124,50 @@ public class Table {
         }
         return result.toString();
     }
+    public void delete(String[] condition) {
+        for (int i = 0; i < rows.size(); i++) {
+            Row row = rows.get(i);
+            boolean conditionMet = isConditionMet(row, condition);
+            if (conditionMet) {
+                rows.remove(i);
+                i--;
+            }
+        }
+    }
+    public void update(String[] columnNames,String[] values, String[] condition) {
+        for (Row row : rows) {
+            boolean conditionMet = isConditionMet(row, condition);
+            if (conditionMet) {
+                for (int i = 0; i < columnNames.length; i++) {
+                    if (!columns.containsKey(columnNames[i])) {
+                        throw new IllegalArgumentException("Column does not exist");
+                    }
+                    row.addValue(columns.get(columnNames[i]), parseValue(values[i], columns.get(columnNames[i]).getType()));
+                }
+            }
+        }
+    }
+    private boolean isConditionMet(Row row, String[] condition) {
+        Object value1 = row.getValue(columns.get(condition[0]));
+        Object value2 = parseValue(condition[2], columns.get(condition[0]).getType());
 
+        switch (condition[1]) {
+            case "=":
+                return value1.equals(value2);
+            case "!=":
+                return !value1.equals(value2);
+            case ">":
+                return compareValues(value1, value2) > 0;
+            case "<":
+                return compareValues(value1, value2) < 0;
+            case ">=":
+                return compareValues(value1, value2) >= 0;
+            case "<=":
+                return compareValues(value1, value2) <= 0;
+            default:
+                throw new IllegalArgumentException("Invalid condition");
+        }
+    }
     private Object parseValue(String value, String type) {
         switch (type) {
             case "INT":
