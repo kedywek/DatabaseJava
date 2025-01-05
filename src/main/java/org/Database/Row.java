@@ -1,10 +1,11 @@
 package org.Database;
 
 import java.util.Map;
+import java.util.HashMap;
 
 public class Row {
 
-    private Map<Column, Object> values;
+    private Map<Column, Object> values = new HashMap<>();
 
     public Row(Map<Column, Object> values) {
         this.values = values;
@@ -22,7 +23,19 @@ public class Row {
     }
 
     public Object getValue(Column column) {
+        if (!values.containsKey(column)) {
+            throw new IllegalArgumentException("Column does not exist");
+        }
         return values.get(column);
+    }
+
+    public Object getValue(String columnName) {
+        for (Column column : values.keySet()) {
+            if (column.getName().equals(columnName)) {
+                return values.get(column);
+            }
+        }
+        throw new IllegalArgumentException("Column does not exist");
     }
 
     public void addValue(Column column, Object value) {

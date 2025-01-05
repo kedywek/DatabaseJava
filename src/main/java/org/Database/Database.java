@@ -1,6 +1,7 @@
 package org.Database;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -8,13 +9,12 @@ public class Database {
 
 
     private String name;
-    private Map<String, Table> tables;
-    private File file;
-
+    private Map<String, Table> tables = new HashMap<>();
 
     public Database(String name){
         this.name = name;
     }
+
     public String getName(){
         return name;
     }
@@ -24,13 +24,18 @@ public class Database {
     }
 
     public void addTable(Table table){
+        if (tables.containsKey(table.getName())) {
+            throw new IllegalArgumentException("Table already exists");
+        }
         tables.put(table.getName(), table);
     }
 
     public void removeTable(String name){
         tables.remove(name);
     }
-
+    public Table[] getTables(){
+        return tables.values().toArray(new Table[0]);
+    }
     public Table getTable(String name){
         if (!tables.containsKey(name)) {
             throw new IllegalArgumentException("Table does not exist");
@@ -62,21 +67,30 @@ public class Database {
         Column[] columnsToMerge = new Column[2];
         if (leftPartOfCondition[0].equals(tableNames[0])) {
             columnsToMerge[0] = tables[0].getColumn(leftPartOfCondition[1]);
+            if (rightPartOfCondition[0].equals(tableNames[1])) {
+                columnsToMerge[1] = tables[1].getColumn(rightPartOfCondition[1]);
+            }
+            else {
+                throw new IllegalArgumentException("Invalid condition");
+            }
         }
         else if(rightPartOfCondition[0].equals(tableNames[0])){
             columnsToMerge[0] = tables[0].getColumn(rightPartOfCondition[1]);
+            if (leftPartOfCondition[0].equals(tableNames[1])) {
+                columnsToMerge[1] = tables[1].getColumn(leftPartOfCondition[1]);
+            }
+            else {
+                throw new IllegalArgumentException("Invalid condition");
+            }
         }
         else{
             throw new IllegalArgumentException("Invalid condition");
         }
-        if (leftPartOfCondition[0].equals(tableNames[1])) {
-            columnsToMerge[1] = tables[0].getColumn(leftPartOfCondition[1]);
+        for (Column column : tables[0].getColumns()) {
+            result.addColumn(column);
         }
-        else if(rightPartOfCondition[0].equals(tableNames[1])){
-            columnsToMerge[1] = tables[0].getColumn(rightPartOfCondition[1]);
-        }
-        else{
-            throw new IllegalArgumentException("Invalid condition");
+        for (Column column : tables[1].getColumns()) {
+            result.addColumn(column);
         }
         for (Row row1 : tables[0].getRows()) {
             for (Row row2 : tables[1].getRows()) {

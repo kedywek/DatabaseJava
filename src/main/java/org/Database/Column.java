@@ -21,7 +21,7 @@ public class Column{
     }
 
     static boolean isValidType(String type){
-        return VALID_TYPES.contains(type) || type == null || type.isEmpty();
+        return !(VALID_TYPES.contains(type) || type == null || type.isEmpty());
     }
 
     public String getName(){

@@ -2,13 +2,14 @@ package org.Database;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedHashMap;
 
 public class Table {
     private String name;
     private LinkedHashMap<String, Column> columns;
-    private List<Row> rows;
+    private List<Row> rows = new ArrayList<>();
 
     public Table(String name, String[] columnNames, String[] columnTypes) {
         if (columnNames.length != columnTypes.length) {
@@ -22,6 +23,7 @@ public class Table {
     }
     public Table(String name) {
         this.name = name;
+        columns = new LinkedHashMap<>();
     }
 
     public String getName() {
@@ -133,6 +135,22 @@ public class Table {
             }
         }
     }
+    public void insert(String[] columns,String[] values) {
+        if (columns.length != values.length) {
+            throw new IllegalArgumentException("Number of columns and values must be equal");
+        }
+
+        Row row = new Row();
+        for (int i = 0; i < columns.length; i++) {
+            if (!this.columns.containsKey(columns[i])) {
+                throw new IllegalArgumentException("Column does not exist");
+            }
+            row.addValue(this.columns.get(columns[i]), parseValue(values[i], this.columns.get(columns[i]).getType()));
+        }
+        rows.add(row);
+
+    }
+
     public void update(String[] columnNames,String[] values, String[] condition) {
         for (Row row : rows) {
             boolean conditionMet = multipleConditionsMet(row, condition);
@@ -147,7 +165,7 @@ public class Table {
         }
     }
     private boolean multipleConditionsMet(Row row, String[] conditions) {
-        boolean result = true;
+        boolean result = isConditionMet(row, new String[]{conditions[0], conditions[1], conditions[2]});
         for (int i = 3; i < conditions.length; i += 4) {
             try{
                 if (conditions[i].equals("AND")) {
@@ -187,6 +205,7 @@ public class Table {
                 throw new IllegalArgumentException("Invalid condition");
         }
     }
+
     private Object parseValue(String value, String type) {
         switch (type) {
             case "INT":
